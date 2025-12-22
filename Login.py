@@ -17,20 +17,13 @@ st.set_page_config(
 # --------------------------------------------------------------------------------
 # @st.cache_resource tells Streamlit to run this function ONCE and cache the result.
 # This prevents reconnecting to Firebase on every single user interaction.
+# In login.py
+
 @st.cache_resource
 def get_firebase_auth():
-    # Firebase configuration
-    # SECURITY NOTE: In a real production app, put these in .streamlit/secrets.toml
-    firebaseConfig = {
-        "apiKey": "AIzaSyDBKimPpBdQhWzMbhCdUgMma3xtUnPoQOE",
-        "authDomain": "heartattackapp-1327e.firebaseapp.com",
-        "projectId": "heartattackapp-1327e",
-        "databaseURL": "https://heartattackapp-1327e-default-rtdb.firebaseio.com",
-        "storageBucket": "heartattackapp-1327e.firebasestorage.app",
-        "messagingSenderId": "18964812650",
-        "appId": "1:18964812650:web:b7f316cb3e8a39a9f38b13",
-        "measurementId": "G-PF14X2CPFE"
-    }
+    # Load config from Streamlit Secrets (Secure!)
+    # This reads the keys you pasted into the Dashboard earlier.
+    firebaseConfig = dict(st.secrets["firebase"])
     
     # Initialize the app only once
     firebase = pyrebase.initialize_app(firebaseConfig)
