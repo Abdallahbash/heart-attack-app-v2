@@ -1,0 +1,45 @@
+#---------------
+# Core numerical & ML
+numpy==1.26.4
+pandas==2.3.3
+scikit-learn==1.2.2
+scipy==1.15.3
+joblib==1.5.2
+
+# Visualization
+matplotlib==3.10.7
+seaborn==0.13.2
+Pillow==9.5.0
+
+# Jupyter Notebook (required)
+ipython==8.37.0
+ipykernel==7.1.0
+jupyter-client==8.7.0
+jupyter-core==5.9.1
+traitlets==5.14.3
+pyzmq==27.1.0
+tornado==6.5.2
+
+# Streamlit app
+streamlit==1.27.0
+streamlit-lottie==0.0.5
+streamlit-option-menu==0.3.13
+
+# Networking & APIs
+requests==2.22.0
+requests-toolbelt==0.9.1
+urllib3==1.25.11
+
+# Auth / Firebase / Security
+PyJWT==2.10.1
+Pyrebase4==4.7.1
+secure-smtplib==0.1.1
+cryptography==46.0.3
+pycryptodome==3.23.0
+
+# Utilities (used by notebooks & data handling)
+protobuf==4.25.8
+pyarrow==22.0.0
+python-dateutil==2.9.0.post0
+pytz==2025.2
+six==1.17.0
