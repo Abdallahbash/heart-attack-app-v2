@@ -14,7 +14,6 @@ from streamlit_lottie import st_lottie
 
 @st.cache_resource
 def load_model():
-    # Make sure this path is exactly where your file is located
     return pickle.load(open("Model_datasets/final_model.pickle", "rb"))
 
 @st.cache_data
@@ -33,7 +32,6 @@ def load_lottieurl(url):
 
 def send_email_report(user_email, result_text):
     try:
-        # Load credentials from st.secrets
         gmail_user = st.secrets["email"]["gmail_user"] 
         gmail_password = st.secrets["email"]["gmail_password"]
 
@@ -74,7 +72,6 @@ def send_email_report(user_email, result_text):
 # 3. MAIN APP FUNCTION
 # --------------------------------------------------------------------------------
 
-# CHANGE 1: Accept the 'db' variable here
 def app_one(email=None, db=None):
     
     loaded_model = load_model()
@@ -110,8 +107,12 @@ def app_one(email=None, db=None):
 
         # --- FORM INPUTS ---
         
+        # Section 0: Patient Name (NEW!)
+        st.subheader("1. Patient Identification")
+        patient_name = st.text_input("Patient Name", placeholder="e.g. John Doe")
+
         # Section 1: Basic Vitals
-        st.subheader("1. Patient Vitals")
+        st.subheader("2. Patient Vitals")
         c1, c2 = st.columns(2)
         
         with c1:
@@ -151,7 +152,7 @@ def app_one(email=None, db=None):
 
         # Section 2: Clinical Metrics
         st.write("---")
-        st.subheader("2. Clinical Test Results")
+        st.subheader("3. Clinical Test Results")
         st.caption("These values usually come from a doctor's report or ECG test.")
         
         c3, c4 = st.columns(2)
@@ -250,6 +251,11 @@ def app_one(email=None, db=None):
 
         if predict_btn:
             try:
+                # Basic validation: ensure name isn't empty (optional, but good)
+                if not patient_name:
+                    st.warning("Please enter the patient's name before analyzing.")
+                    st.stop()
+
                 user_input = [
                     age, sex_map[sex], cp_map[cp_choice], trestbps, chol,
                     fbs_map[fbs_choice], restecg_map[restecg_choice], thalach,
@@ -261,26 +267,25 @@ def app_one(email=None, db=None):
                 prediction = loaded_model.predict(input_reshaped)
 
                 if prediction[0] == 0:
-                    st.success("✅ **Result:** Low probability of heart attack.")
+                    st.success(f"✅ **Result for {patient_name}:** Low probability of heart attack.")
                     st.balloons()
-                    result_msg = "Congratulation! The probability of having a heart attack is low."
+                    result_msg = f"Report for {patient_name}: Congratulation! The probability of having a heart attack is low."
                     
                     with st.expander("See Prevention Tips", expanded=True):
-                         # I replaced the GIF with text in case the GIF link breaks in future
                         st.markdown("""
                         * **Stop smoking:** Even 1-2 cigarettes a day increases risk.
                         * **Eat Healthy:** More fruits and vegetables.
                         * **Move More:** Physical activity is key.
                         """)
                 else:
-                    st.error("⚠️ **Warning:** High probability of heart attack detected.")
-                    result_msg = "Warning! High chance of heart attack detected. Please consult a doctor immediately."
+                    st.error(f"⚠️ **Result for {patient_name}:** High probability of heart attack detected.")
+                    result_msg = f"Report for {patient_name}: Warning! High chance of heart attack detected. Please consult a doctor immediately."
                     st.markdown("### 🚨 Please consult a doctor immediately.")
 
-                # --- CHANGE 2: SAVE TO FIREBASE DATABASE ---
+                # --- SAVE TO FIREBASE DATABASE (UPDATED) ---
                 if db:
-                    # Construct the record
                     patient_record = {
+                        "Patient_Name": patient_name, # <--- NEW: SAVING THE NAME
                         "Age": age,
                         "Sex": sex,
                         "BloodPressure": trestbps,
@@ -290,9 +295,8 @@ def app_one(email=None, db=None):
                         "Doctor_Email": email,
                         "Timestamp": str(np.datetime64('now'))
                     }
-                    # Save it to the 'Patients_Analysis' folder in Database
                     db.child("Patients_Analysis").push(patient_record)
-                    st.toast("Patient Data Saved to Database! 💾")
+                    st.toast(f"Record for {patient_name} Saved! 💾")
                 # ---------------------------------------------
 
                 if email:
@@ -306,7 +310,7 @@ def app_one(email=None, db=None):
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
-        # --- MEDICAL GLOSSARY (FIXED) ---
+        # --- MEDICAL GLOSSARY ---
         with st.expander("📚 Medical Glossary"):
             st.write("Reference definitions for the medical terms used above:")
             st.markdown("""
@@ -346,3 +350,4 @@ def app_one(email=None, db=None):
             </form>
             """
             st.markdown(contact_form, unsafe_allow_html=True)
+
