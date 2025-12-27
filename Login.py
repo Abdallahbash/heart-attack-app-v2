@@ -14,20 +14,25 @@ st.set_page_config(
 # 2. OPTIMIZED FIREBASE CONNECTION
 # --------------------------------------------------------------------------------
 @st.cache_resource
-def get_firebase_auth():
+def get_firebase():
     # Load config from Streamlit Secrets (Secure!)
     try:
         firebaseConfig = dict(st.secrets["firebase"])
+        # Change 1: Return the whole app, not just auth
+        return pyrebase.initialize_app(firebaseConfig)
     except FileNotFoundError:
         st.error("Secrets not found. Please ensure .streamlit/secrets.toml exists.")
         return None
 
-    # Initialize the app only once
-    firebase = pyrebase.initialize_app(firebaseConfig)
-    return firebase.auth()
+# Initialize the app
+firebase = get_firebase()
 
-# Initialize auth using the cached function
-auth = get_firebase_auth()
+# Change 2: Extract BOTH Auth and Database tools
+if firebase:
+    auth = firebase.auth()
+    db = firebase.database() # <--- NEW: Get the Database Tool
+else:
+    auth, db = None, None
 
 # --------------------------------------------------------------------------------
 # 3. SESSION STATE MANAGEMENT
@@ -78,7 +83,8 @@ def main():
                 st.session_state.email = ''
                 st.rerun() 
         
-        app.app_one(st.session_state.email)
+        # Change 3: Pass the 'db' tool to the app
+        app.app_one(st.session_state.email, db)
 
     # --- SCENARIO B: USER IS NOT LOGGED IN ---
     else:
@@ -88,10 +94,7 @@ def main():
         choice = st.sidebar.selectbox('Login/Signup', ['Login', 'Sign up', 'Reset password'])
         
         # --- INPUT CLEANING (MOBILE FIX) ---
-        # 1. Get raw input
         raw_email = st.sidebar.text_input('Please enter your email address')
-        
-        # 2. Clean it: remove spaces (common on mobile) and force lowercase
         email = raw_email.strip().lower()
         
         password = ""
