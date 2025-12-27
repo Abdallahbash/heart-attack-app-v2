@@ -33,7 +33,7 @@ def load_lottieurl(url):
 
 def send_email_report(user_email, result_text):
     try:
-        # Load credentials from st.secrets (or hardcode for testing if needed)
+        # Load credentials from st.secrets
         gmail_user = st.secrets["email"]["gmail_user"] 
         gmail_password = st.secrets["email"]["gmail_password"]
 
@@ -74,7 +74,8 @@ def send_email_report(user_email, result_text):
 # 3. MAIN APP FUNCTION
 # --------------------------------------------------------------------------------
 
-def app_one(email=None):
+# CHANGE 1: Accept the 'db' variable here
+def app_one(email=None, db=None):
     
     loaded_model = load_model()
     anim_heart = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_zw7jo1.json")
@@ -276,6 +277,24 @@ def app_one(email=None):
                     result_msg = "Warning! High chance of heart attack detected. Please consult a doctor immediately."
                     st.markdown("### 🚨 Please consult a doctor immediately.")
 
+                # --- CHANGE 2: SAVE TO FIREBASE DATABASE ---
+                if db:
+                    # Construct the record
+                    patient_record = {
+                        "Age": age,
+                        "Sex": sex,
+                        "BloodPressure": trestbps,
+                        "Cholesterol": chol,
+                        "HeartRate": thalach,
+                        "Prediction": "Low Risk" if prediction[0] == 0 else "High Risk",
+                        "Doctor_Email": email,
+                        "Timestamp": str(np.datetime64('now'))
+                    }
+                    # Save it to the 'Patients_Analysis' folder in Database
+                    db.child("Patients_Analysis").push(patient_record)
+                    st.toast("Patient Data Saved to Database! 💾")
+                # ---------------------------------------------
+
                 if email:
                     with st.spinner("Sending report to your email..."):
                         sent = send_email_report(email, result_msg)
@@ -326,3 +345,4 @@ def app_one(email=None):
                 <button type="submit" style="background-color: #FF4B4B; color: white; border: none; padding: 10px 20px; cursor: pointer;">Send Message</button>
             </form>
             """
+            st.markdown(contact_form, unsafe_allow_html=True)
